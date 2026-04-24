@@ -120,3 +120,47 @@ NUNCA ejecutar rollback sin confirmación explícita con ID específico.
 - Si algo falla, PARA y reporta. No improvises.
 - Si el repo no matchea ningún template, PARA y describe qué falta.
 - Deploy a prod requiere confirmación explícita del usuario.
+
+## Docker — Cuándo usarlo
+El agente usa Docker únicamente cuando el usuario lo pide
+explícitamente en su instrucción. Ejemplos:
+- "deploya partido360 en dev con Docker"
+- "usa Docker para subir api-finanzas a pre-prod"
+
+En cualquier otro caso, el agente usa Nixpacks por defecto.
+
+## Docker — Flujo de deploy
+
+### Paso D1 — Verificar Dockerfile
+Busca `Dockerfile` en la raíz del repo (rama del entorno).
+
+- Si existe → úsalo tal cual.
+- Si NO existe → crea uno usando el template correspondiente de
+  `SmartTestingRD/devops-templates/docker/`:
+
+  | Tipo de proyecto | Template a usar |
+  |---|---|
+  | Backend Node/Express | docker/node/Dockerfile |
+  | Frontend React/Vite | docker/react/Dockerfile |
+  | Monorepo Node+React | docker/monorepo/node-react/docker-compose.yml |
+
+  Copia el template al repo, ajusta si es necesario (puerto, entry
+  point), haz commit en la rama del entorno antes de continuar.
+
+### Paso D2 — Crear app en Coolify
+Mismos parámetros que el flujo Nixpacks (Paso 2) pero con:
+- Build pack: Dockerfile (no Nixpacks)
+- Dockerfile path: /Dockerfile
+
+### Paso D3 — Env vars, deploy y verificación
+Igual que Pasos 4, 5, 6 y 7 del flujo Nixpacks.
+
+### Paso D4 — Rollback Docker
+Igual que la sección Rollback del flujo Nixpacks.
+
+### Limitación conocida — Docker Compose
+Si el proyecto usa docker-compose.yml, Coolify requiere que el
+PRIMER deploy se haga manualmente desde la UI. El agente puede
+hacer redeploys posteriores via MCP, pero no la creación inicial.
+Si detectas docker-compose.yml, PARA y avisa al usuario que debe
+hacer el primer deploy desde la UI de Coolify.
